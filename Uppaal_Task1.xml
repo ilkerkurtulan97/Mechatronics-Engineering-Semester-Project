@@ -9,7 +9,6 @@ chan other;
 chan obstacle;
 chan obs_safe;
 
-
 int speed = 0;
 typedef scalar[3] ptype;
 int obstacleDistance = 10;
@@ -44,6 +43,8 @@ ptype plant_type;
 	</template>
 	<template>
 		<name>Obstacle_detection</name>
+		<declaration>
+int obstacleDistance;</declaration>
 		<location id="id4" x="-238" y="-68">
 		</location>
 		<location id="id5" x="0" y="-153">
@@ -152,12 +153,12 @@ clock obstacle_avoidance_time;</declaration>
 		<transition id="id22">
 			<source ref="id17"/>
 			<target ref="id13"/>
-			<label kind="guard" x="-272" y="-153">plant_inspection_time &gt; 30</label>
+			<label kind="guard" x="-263" y="-127">plant_inspection_time &gt; 30</label>
 		</transition>
 		<transition id="id23">
 			<source ref="id16"/>
 			<target ref="id13"/>
-			<label kind="guard" x="-612" y="-17">plant_inspection_time &gt; 30</label>
+			<label kind="guard" x="-433" y="-34">plant_inspection_time &gt; 30</label>
 			<nail x="-433" y="0"/>
 		</transition>
 		<transition id="id24">
@@ -207,9 +208,12 @@ clock obstacle_avoidance_time;</declaration>
 		</transition>
 	</template>
 	<system>// Place template instantiations here.
-Process = Farming_AV();
+Process_main = Farming_AV();
+Process_sub1 = Plant_classification();
+Process_sub2 = Obstacle_detection();
+Process_sub3 = Plant_detection();
 // List one or more processes to be composed into a system.
-system Process, Plant_classification, Obstacle_detection, Plant_detection;
+system Process_main, Process_sub1, Process_sub2, Process_sub3;
 </system>
 	<queries>
 		<query>
