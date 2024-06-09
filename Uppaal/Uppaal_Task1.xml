@@ -8,212 +8,525 @@ chan disease;
 chan other;
 chan obstacle;
 chan obs_safe;
+chan pCorrected, lostTrack;
+chan stop, move;
+chan start, pFinish, weFinish, finish;
+chan weStart, wReached;
+chan dStart, dReached;
 
 int speed = 0;
 typedef scalar[3] ptype;
 int obstacleDistance = 10;
 ptype plant_type; 
+int plant_count = 10;
+int weed_count = 0;
+int disease_count = 0;
 </declaration>
 	<template>
-		<name>Plant_classification</name>
-		<location id="id0" x="0" y="0">
+		<name>Disease_Eradication</name>
+		<location id="id0" x="85" y="-93">
+			<name x="102" y="-102">diseaseEradication</name>
 		</location>
-		<init ref="id0"/>
-		<transition id="id1">
-			<source ref="id0"/>
-			<target ref="id0"/>
-			<label kind="synchronisation" x="-25" y="110">other!</label>
-			<nail x="-51" y="93"/>
-			<nail x="51" y="93"/>
-		</transition>
-		<transition id="id2">
-			<source ref="id0"/>
-			<target ref="id0"/>
-			<label kind="synchronisation" x="119" y="0">disease!</label>
-			<nail x="110" y="-42"/>
-			<nail x="110" y="59"/>
-		</transition>
+		<location id="id1" x="-238" y="-16">
+			<name x="-314" y="-25">Driving</name>
+		</location>
+		<location id="id2" x="-59" y="-93">
+			<committed/>
+		</location>
+		<init ref="id1"/>
 		<transition id="id3">
 			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="-93" y="-34">move!</label>
+			<label kind="assignment" x="-93" y="-17">disease_count--</label>
+			<nail x="68" y="-16"/>
+		</transition>
+		<transition id="id4">
+			<source ref="id2"/>
 			<target ref="id0"/>
-			<label kind="synchronisation" x="-25" y="-127">weed!</label>
-			<nail x="-59" y="-102"/>
-			<nail x="51" y="-102"/>
+			<label kind="synchronisation" x="-8" y="-119">stop!</label>
+		</transition>
+		<transition id="id5">
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="synchronisation" x="-195" y="-110">dReached?</label>
+			<nail x="-212" y="-93"/>
+		</transition>
+	</template>
+	<template>
+		<name>Defected_reaching</name>
+		<location id="id6" x="-238" y="-25">
+		</location>
+		<location id="id7" x="-34" y="-161">
+		</location>
+		<location id="id8" x="-34" y="-25">
+		</location>
+		<init ref="id6"/>
+		<transition id="id9">
+			<source ref="id8"/>
+			<target ref="id8"/>
+			<label kind="guard" x="8" y="-25">disease_count &gt; 0</label>
+			<label kind="synchronisation" x="8" y="-42">dReached!</label>
+			<nail x="8" y="-59"/>
+			<nail x="8" y="8"/>
+		</transition>
+		<transition id="id10">
+			<source ref="id8"/>
+			<target ref="id6"/>
+			<label kind="guard" x="-204" y="59">disease_count == 0</label>
+			<label kind="synchronisation" x="-204" y="42">finish!</label>
+			<nail x="-59" y="42"/>
+			<nail x="-212" y="42"/>
+		</transition>
+		<transition id="id11">
+			<source ref="id6"/>
+			<target ref="id8"/>
+			<label kind="synchronisation" x="-170" y="-42">dStart?</label>
+		</transition>
+		<transition id="id12">
+			<source ref="id7"/>
+			<target ref="id6"/>
+			<label kind="guard" x="-110" y="-110">weed_count == 0</label>
+			<label kind="synchronisation" x="-85" y="-127">weFinish!</label>
+		</transition>
+		<transition id="id13">
+			<source ref="id7"/>
+			<target ref="id7"/>
+			<label kind="guard" x="-76" y="-255">weed_count &gt; 0</label>
+			<label kind="synchronisation" x="-76" y="-238">wReached!</label>
+			<nail x="-68" y="-212"/>
+			<nail x="-9" y="-212"/>
+		</transition>
+		<transition id="id14">
+			<source ref="id6"/>
+			<target ref="id7"/>
+			<label kind="synchronisation" x="-212" y="-187">weStart?</label>
+			<nail x="-238" y="-161"/>
+		</transition>
+	</template>
+	<template>
+		<name>Weed_elimination</name>
+		<location id="id15" x="-187" y="-42">
+			<name x="-263" y="-51">Driving</name>
+		</location>
+		<location id="id16" x="-8" y="-119">
+			<committed/>
+		</location>
+		<location id="id17" x="136" y="-119">
+			<name x="134" y="-153">weedElimination</name>
+		</location>
+		<init ref="id15"/>
+		<transition id="id18">
+			<source ref="id17"/>
+			<target ref="id15"/>
+			<label kind="synchronisation" x="-34" y="-59">move!</label>
+			<label kind="assignment" x="-34" y="-42">weed_count--</label>
+			<nail x="119" y="-42"/>
+		</transition>
+		<transition id="id19">
+			<source ref="id16"/>
+			<target ref="id17"/>
+			<label kind="synchronisation" x="10" y="-136">stop!</label>
+		</transition>
+		<transition id="id20">
+			<source ref="id15"/>
+			<target ref="id16"/>
+			<label kind="synchronisation" x="-161" y="-136">wReached?</label>
+			<nail x="-161" y="-119"/>
+		</transition>
+	</template>
+	<template>
+		<name>Driving</name>
+		<declaration>clock obstacle_avoidance_time;</declaration>
+		<location id="id21" x="26" y="-195">
+			<name x="42" y="-187">Driving</name>
+			<label kind="invariant" x="43" y="-170">speed &lt;= 10</label>
+		</location>
+		<location id="id22" x="230" y="-195">
+			<name x="230" y="-187">obstaclesAvoidance</name>
+		</location>
+		<location id="id23" x="-178" y="-34">
+			<name x="-322" y="-42">pathCorrection</name>
+		</location>
+		<location id="id24" x="-178" y="-297">
+			<name x="-246" y="-323">Waiting</name>
+		</location>
+		<init ref="id21"/>
+		<transition id="id25">
+			<source ref="id22"/>
+			<target ref="id24"/>
+			<label kind="synchronisation" x="-144" y="-391">stop?</label>
+			<nail x="230" y="-365"/>
+			<nail x="-178" y="-365"/>
+		</transition>
+		<transition id="id26">
+			<source ref="id23"/>
+			<target ref="id24"/>
+			<label kind="synchronisation" x="-229" y="-204">stop?</label>
+		</transition>
+		<transition id="id27">
+			<source ref="id24"/>
+			<target ref="id21"/>
+			<label kind="synchronisation" x="-84" y="-272">move?</label>
+		</transition>
+		<transition id="id28">
+			<source ref="id21"/>
+			<target ref="id24"/>
+			<label kind="synchronisation" x="-110" y="-323">stop?</label>
+			<nail x="-16" y="-297"/>
+		</transition>
+		<transition id="id29">
+			<source ref="id23"/>
+			<target ref="id21"/>
+			<label kind="synchronisation" x="-110" y="-195">pCorrected?</label>
+			<nail x="-118" y="-195"/>
+		</transition>
+		<transition id="id30">
+			<source ref="id21"/>
+			<target ref="id23"/>
+			<label kind="synchronisation" x="-135" y="-60">lostTrack?</label>
+		</transition>
+		<transition id="id31">
+			<source ref="id22"/>
+			<target ref="id22"/>
+			<label kind="guard" x="255" y="-263">obstacle_avoidance_time &lt;= 60</label>
+			<nail x="315" y="-238"/>
+			<nail x="255" y="-238"/>
+		</transition>
+		<transition id="id32">
+			<source ref="id21"/>
+			<target ref="id22"/>
+			<label kind="synchronisation" x="111" y="-221">obstacle?</label>
+			<nail x="68" y="-246"/>
+			<nail x="196" y="-246"/>
+		</transition>
+		<transition id="id33">
+			<source ref="id22"/>
+			<target ref="id21"/>
+			<label kind="synchronisation" x="94" y="-272">obs_safe?</label>
+		</transition>
+	</template>
+	<template>
+		<name>Role_management</name>
+		<location id="id34" x="-263" y="8">
+		</location>
+		<location id="id35" x="-119" y="-102">
+			<name x="-187" y="-144">PlantDectection</name>
+		</location>
+		<location id="id36" x="34" y="8">
+			<name x="51" y="-8">weedElimination</name>
+		</location>
+		<location id="id37" x="-119" y="119">
+			<name x="-187" y="136">diseaseEradication</name>
+		</location>
+		<location id="id38" x="34" y="-102">
+			<committed/>
+		</location>
+		<location id="id39" x="34" y="119">
+			<committed/>
+		</location>
+		<init ref="id34"/>
+		<transition id="id40">
+			<source ref="id34"/>
+			<target ref="id34"/>
+			<label kind="guard" x="-459" y="-25">plant_count == 0</label>
+			<label kind="synchronisation" x="-365" y="-8">stop!</label>
+			<nail x="-314" y="-34"/>
+			<nail x="-314" y="42"/>
+		</transition>
+		<transition id="id41">
+			<source ref="id39"/>
+			<target ref="id37"/>
+			<label kind="synchronisation" x="-68" y="93">dStart!</label>
+		</transition>
+		<transition id="id42">
+			<source ref="id36"/>
+			<target ref="id39"/>
+			<label kind="synchronisation" x="42" y="51">weFinish?</label>
+		</transition>
+		<transition id="id43">
+			<source ref="id38"/>
+			<target ref="id36"/>
+			<label kind="synchronisation" x="42" y="-68">weStart!</label>
+		</transition>
+		<transition id="id44">
+			<source ref="id37"/>
+			<target ref="id34"/>
+			<label kind="synchronisation" x="-255" y="93">finish?</label>
+			<nail x="-263" y="119"/>
+		</transition>
+		<transition id="id45">
+			<source ref="id35"/>
+			<target ref="id38"/>
+			<label kind="synchronisation" x="-85" y="-102">pFinish?</label>
+			<nail x="-17" y="-102"/>
+		</transition>
+		<transition id="id46">
+			<source ref="id34"/>
+			<target ref="id35"/>
+			<label kind="guard" x="-255" y="-85">plant_count &gt; 0</label>
+			<label kind="synchronisation" x="-255" y="-102">start!</label>
+			<nail x="-263" y="-102"/>
+		</transition>
+	</template>
+	<template>
+		<name>Path_correction</name>
+		<location id="id47" x="-187" y="-42">
+		</location>
+		<location id="id48" x="-8" y="-102">
+		</location>
+		<init ref="id47"/>
+		<transition id="id49">
+			<source ref="id48"/>
+			<target ref="id47"/>
+			<label kind="synchronisation" x="-144" y="-59">pCorrected!</label>
+			<nail x="-8" y="-42"/>
+		</transition>
+		<transition id="id50">
+			<source ref="id47"/>
+			<target ref="id48"/>
+			<label kind="synchronisation" x="-169" y="-119">lostTrack!</label>
+			<nail x="-187" y="-102"/>
+			<nail x="-178" y="-102"/>
+		</transition>
+	</template>
+	<template>
+		<name>Plant_classification</name>
+		<location id="id51" x="0" y="0">
+		</location>
+		<init ref="id51"/>
+		<transition id="id52">
+			<source ref="id51"/>
+			<target ref="id51"/>
+			<label kind="synchronisation" x="-25" y="51">other!</label>
+			<nail x="-25" y="51"/>
+			<nail x="25" y="51"/>
+		</transition>
+		<transition id="id53">
+			<source ref="id51"/>
+			<target ref="id51"/>
+			<label kind="synchronisation" x="68" y="-17">disease!</label>
+			<nail x="59" y="-34"/>
+			<nail x="59" y="25"/>
+		</transition>
+		<transition id="id54">
+			<source ref="id51"/>
+			<target ref="id51"/>
+			<label kind="synchronisation" x="-25" y="-85">weed!</label>
+			<nail x="-25" y="-59"/>
+			<nail x="25" y="-59"/>
 		</transition>
 	</template>
 	<template>
 		<name>Obstacle_detection</name>
-		<declaration>
-int obstacleDistance;</declaration>
-		<location id="id4" x="-238" y="-68">
+		<declaration>int history;</declaration>
+		<location id="id55" x="-238" y="-68">
 		</location>
-		<location id="id5" x="0" y="-153">
-			<name x="17" y="-161">distanceAdjustment</name>
+		<location id="id56" x="0" y="-68">
+			<name x="17" y="-76">distanceAdjustment</name>
 		</location>
-		<init ref="id4"/>
-		<transition id="id6">
-			<source ref="id4"/>
-			<target ref="id5"/>
-			<label kind="guard" x="-178" y="-178">obstacleDistance &lt; 5</label>
-			<label kind="synchronisation" x="-110" y="-153">obstacle!</label>
-			<nail x="-102" y="-153"/>
+		<location id="id57" x="-119" y="-246">
+			<name x="-136" y="-280">Wait</name>
+		</location>
+		<location id="id58" x="-119" y="-161">
+			<name x="-102" y="-170">History</name>
+			<committed/>
+		</location>
+		<init ref="id55"/>
+		<transition id="id59">
+			<source ref="id58"/>
+			<target ref="id56"/>
+			<label kind="guard" x="-93" y="-127">history == 1</label>
 		</transition>
-		<transition id="id7">
-			<source ref="id4"/>
-			<target ref="id4"/>
-			<label kind="assignment" x="-254" y="-8">obstacleDistance--</label>
-			<nail x="-272" y="-8"/>
-			<nail x="-204" y="-8"/>
+		<transition id="id60">
+			<source ref="id58"/>
+			<target ref="id55"/>
+			<label kind="guard" x="-221" y="-127">history == 0</label>
 		</transition>
-		<transition id="id8">
-			<source ref="id4"/>
-			<target ref="id4"/>
-			<label kind="assignment" x="-365" y="-153">obstacleDistance++</label>
-			<nail x="-280" y="-127"/>
-			<nail x="-204" y="-127"/>
+		<transition id="id61">
+			<source ref="id57"/>
+			<target ref="id58"/>
+			<label kind="synchronisation" x="-161" y="-212">move?</label>
 		</transition>
-		<transition id="id9">
-			<source ref="id4"/>
-			<target ref="id4"/>
-			<label kind="guard" x="-484" y="-76">obstacleDistance &gt;= 5</label>
-			<nail x="-297" y="-110"/>
-			<nail x="-297" y="-25"/>
+		<transition id="id62">
+			<source ref="id56"/>
+			<target ref="id57"/>
+			<label kind="synchronisation" x="-51" y="-229">stop?</label>
+			<label kind="assignment" x="-51" y="-212">history = 1</label>
+			<nail x="0" y="-153"/>
 		</transition>
-		<transition id="id10">
-			<source ref="id5"/>
-			<target ref="id4"/>
-			<label kind="synchronisation" x="-144" y="-85">obs_safe!</label>
-			<label kind="assignment" x="-187" y="-68">obstacleDistance += 5</label>
-			<nail x="0" y="-68"/>
+		<transition id="id63">
+			<source ref="id55"/>
+			<target ref="id57"/>
+			<label kind="synchronisation" x="-238" y="-221">stop?</label>
+			<label kind="assignment" x="-289" y="-204">history = 0</label>
+			<nail x="-238" y="-153"/>
+		</transition>
+		<transition id="id64">
+			<source ref="id55"/>
+			<target ref="id56"/>
+			<label kind="guard" x="-204" y="-85">obstacleDistance &lt; 5</label>
+			<label kind="synchronisation" x="-153" y="-68">obstacle!</label>
+		</transition>
+		<transition id="id65">
+			<source ref="id55"/>
+			<target ref="id55"/>
+			<label kind="assignment" x="-348" y="-8">obstacleDistance--</label>
+			<nail x="-255" y="-8"/>
+			<nail x="-212" y="-8"/>
+		</transition>
+		<transition id="id66">
+			<source ref="id55"/>
+			<target ref="id55"/>
+			<label kind="assignment" x="-442" y="-110">obstacleDistance++</label>
+			<nail x="-297" y="-68"/>
+			<nail x="-272" y="-110"/>
+		</transition>
+		<transition id="id67">
+			<source ref="id56"/>
+			<target ref="id55"/>
+			<label kind="synchronisation" x="-136" y="-17">obs_safe!</label>
+			<label kind="assignment" x="-136" y="0">obstacleDistance += 5</label>
+			<nail x="-59" y="-17"/>
+			<nail x="-178" y="-17"/>
 		</transition>
 	</template>
 	<template>
 		<name>Plant_detection</name>
-		<location id="id11" x="-561" y="-51">
+		<location id="id68" x="-986" y="-1003">
+			<name x="-969" y="-1012">Driving</name>
 		</location>
-		<init ref="id11"/>
-		<transition id="id12">
-			<source ref="id11"/>
-			<target ref="id11"/>
-			<label kind="synchronisation" x="-629" y="-187">plantDetected!</label>
-			<nail x="-629" y="-161"/>
-			<nail x="-510" y="-161"/>
+		<location id="id69" x="-1173" y="-1003">
+		</location>
+		<init ref="id69"/>
+		<transition id="id70">
+			<source ref="id68"/>
+			<target ref="id69"/>
+			<label kind="guard" x="-1131" y="-952">plant_count == 0</label>
+			<label kind="synchronisation" x="-1131" y="-935">pFinish!</label>
+			<nail x="-1020" y="-952"/>
+			<nail x="-1139" y="-952"/>
+		</transition>
+		<transition id="id71">
+			<source ref="id69"/>
+			<target ref="id68"/>
+			<label kind="synchronisation" x="-1113" y="-1028">start?</label>
+		</transition>
+		<transition id="id72">
+			<source ref="id68"/>
+			<target ref="id68"/>
+			<label kind="guard" x="-1003" y="-1079">plant_count &gt; 0</label>
+			<label kind="synchronisation" x="-1003" y="-1096">plantDetected!</label>
+			<nail x="-1012" y="-1054"/>
+			<nail x="-961" y="-1054"/>
 		</transition>
 	</template>
 	<template>
-		<name x="5" y="5">Farming_AV</name>
+		<name x="5" y="5">Plant_management</name>
 		<declaration>// Place local declarations here.
 clock plant_inspection_time; 
-clock obstacle_avoidance_time;</declaration>
-		<location id="id13" x="-204" y="0">
-			<name x="-280" y="0">Driving</name>
-			<label kind="invariant" x="-314" y="16">speed &lt;= 10</label>
+</declaration>
+		<location id="id73" x="-119" y="-102">
+			<name x="-196" y="-119">Driving</name>
 		</location>
-		<location id="id14" x="221" y="195">
-			<name x="247" y="178">obstaclesAvoidance</name>
+		<location id="id74" x="-544" y="153">
+			<name x="-722" y="127">plantClassification</name>
 		</location>
-		<location id="id15" x="127" y="-170">
-			<name x="136" y="-161">plantClassification</name>
+		<location id="id75" x="-365" y="255">
+			<name x="-425" y="221">weedIdentification</name>
 		</location>
-		<location id="id16" x="-433" y="-93">
-			<name x="-416" y="-110">weedIdentification</name>
+		<location id="id76" x="-365" y="59">
+			<name x="-433" y="76">diseaseDectection</name>
 		</location>
-		<location id="id17" x="-204" y="-255">
-			<name x="-212" y="-289">diseaseDectection</name>
+		<location id="id77" x="-544" y="-102">
+			<committed/>
 		</location>
-		<init ref="id13"/>
-		<transition id="id18">
-			<source ref="id15"/>
-			<target ref="id15"/>
-			<label kind="guard" x="161" y="-246">plant_inspection_time &lt;= 30</label>
-			<nail x="153" y="-221"/>
-			<nail x="212" y="-221"/>
+		<location id="id78" x="-119" y="153">
+		</location>
+		<init ref="id73"/>
+		<transition id="id79">
+			<source ref="id75"/>
+			<target ref="id78"/>
+			<label kind="guard" x="-280" y="255">plant_inspection_time &gt; 30</label>
+			<label kind="assignment" x="-280" y="272">weed_count++</label>
+			<nail x="-161" y="255"/>
 		</transition>
-		<transition id="id19">
-			<source ref="id14"/>
-			<target ref="id14"/>
-			<label kind="guard" x="110" y="255">obstacle_avoidance_time &lt;= 60</label>
-			<nail x="195" y="255"/>
-			<nail x="246" y="255"/>
+		<transition id="id80">
+			<source ref="id76"/>
+			<target ref="id78"/>
+			<label kind="guard" x="-348" y="42">plant_inspection_time &gt; 30</label>
+			<label kind="assignment" x="-289" y="25">disease_count++</label>
+			<nail x="-161" y="59"/>
 		</transition>
-		<transition id="id20">
-			<source ref="id17"/>
-			<target ref="id17"/>
-			<label kind="guard" x="-484" y="-272">plant_inspection_time &lt;= 30</label>
-			<nail x="-255" y="-289"/>
-			<nail x="-255" y="-229"/>
+		<transition id="id81">
+			<source ref="id78"/>
+			<target ref="id73"/>
+			<label kind="synchronisation" x="-110" y="-17">move!</label>
+			<label kind="assignment" x="-110" y="0">plant_count--</label>
 		</transition>
-		<transition id="id21">
-			<source ref="id16"/>
-			<target ref="id16"/>
-			<label kind="guard" x="-714" y="-102">plant_inspection_time &lt;= 30</label>
-			<nail x="-484" y="-127"/>
-			<nail x="-484" y="-59"/>
+		<transition id="id82">
+			<source ref="id74"/>
+			<target ref="id78"/>
+			<label kind="synchronisation" x="-408" y="136">other?</label>
 		</transition>
-		<transition id="id22">
-			<source ref="id17"/>
-			<target ref="id13"/>
-			<label kind="guard" x="-263" y="-127">plant_inspection_time &gt; 30</label>
+		<transition id="id83">
+			<source ref="id77"/>
+			<target ref="id74"/>
+			<label kind="synchronisation" x="-595" y="-34">stop!</label>
 		</transition>
-		<transition id="id23">
-			<source ref="id16"/>
-			<target ref="id13"/>
-			<label kind="guard" x="-433" y="-34">plant_inspection_time &gt; 30</label>
-			<nail x="-433" y="0"/>
+		<transition id="id84">
+			<source ref="id73"/>
+			<target ref="id77"/>
+			<label kind="synchronisation" x="-425" y="-144">plantDetected?</label>
+			<label kind="assignment" x="-484" y="-127">plant_inspection_time := 0</label>
 		</transition>
-		<transition id="id24">
-			<source ref="id15"/>
-			<target ref="id17"/>
-			<label kind="synchronisation" x="51" y="-280">disease?</label>
-			<nail x="127" y="-255"/>
+		<transition id="id85">
+			<source ref="id74"/>
+			<target ref="id74"/>
+			<label kind="guard" x="-824" y="178">plant_inspection_time &lt;= 30</label>
+			<nail x="-603" y="161"/>
+			<nail x="-569" y="204"/>
 		</transition>
-		<transition id="id25">
-			<source ref="id15"/>
-			<target ref="id16"/>
-			<label kind="synchronisation" x="-399" y="-195">weed?</label>
-			<nail x="-433" y="-170"/>
+		<transition id="id86">
+			<source ref="id76"/>
+			<target ref="id76"/>
+			<label kind="guard" x="-450" y="-25">plant_inspection_time &lt;= 30</label>
+			<nail x="-391" y="0"/>
+			<nail x="-340" y="0"/>
 		</transition>
-		<transition id="id26">
-			<source ref="id15"/>
-			<target ref="id13"/>
-			<label kind="synchronisation" x="25" y="-119">other?</label>
-			<nail x="76" y="-93"/>
-			<nail x="-119" y="-93"/>
+		<transition id="id87">
+			<source ref="id75"/>
+			<target ref="id75"/>
+			<label kind="guard" x="-493" y="306">plant_inspection_time &lt;= 30</label>
+			<nail x="-339" y="306"/>
+			<nail x="-382" y="306"/>
 		</transition>
-		<transition id="id27">
-			<source ref="id13"/>
-			<target ref="id14"/>
-			<label kind="synchronisation" x="-102" y="68">obstacle?</label>
-			<nail x="-110" y="93"/>
-			<nail x="127" y="93"/>
+		<transition id="id88">
+			<source ref="id74"/>
+			<target ref="id76"/>
+			<label kind="synchronisation" x="-518" y="85">disease?</label>
+			<nail x="-510" y="59"/>
 		</transition>
-		<transition id="id28">
-			<source ref="id14"/>
-			<target ref="id13"/>
-			<label kind="synchronisation" x="-195" y="170">obs_safe?</label>
-			<nail x="-204" y="195"/>
-		</transition>
-		<transition id="id29">
-			<source ref="id15"/>
-			<target ref="id14"/>
-			<label kind="guard" x="229" y="-25">obstacleDistance &lt; 5</label>
-			<nail x="221" y="-170"/>
-		</transition>
-		<transition id="id30">
-			<source ref="id13"/>
-			<target ref="id15"/>
-			<label kind="synchronisation" x="0" y="-25">plantDetected?</label>
-			<label kind="assignment" x="-102" y="0">plant_inspection_time := 0</label>
-			<nail x="127" y="0"/>
+		<transition id="id89">
+			<source ref="id74"/>
+			<target ref="id75"/>
+			<label kind="synchronisation" x="-467" y="212">weed?</label>
+			<nail x="-510" y="255"/>
 		</transition>
 	</template>
 	<system>// Place template instantiations here.
-Process_main = Farming_AV();
+
+Process_main = Role_management();
 Process_sub1 = Plant_classification();
 Process_sub2 = Obstacle_detection();
 Process_sub3 = Plant_detection();
+Process_sub4 = Path_correction();
+Process_sub5 = Plant_management();
+Process_sub6 = Driving();
+
+
 // List one or more processes to be composed into a system.
-system Process_main, Process_sub1, Process_sub2, Process_sub3;
+system Process_main, Process_sub1, Process_sub2, Process_sub3, Process_sub4, Process_sub5, Process_sub6, Disease_Eradication, Defected_reaching, Weed_elimination;
 </system>
 	<queries>
 		<query>
